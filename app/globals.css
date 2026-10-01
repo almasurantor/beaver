@@ -18,11 +18,13 @@ body {
   min-height: 100%;
   max-width: 100vw;
   overflow-x: hidden;
+  overflow-y: auto;
   background-color: #FFFFFF;
   color: #000000;
   font-smooth: always;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
@@ -34,11 +36,19 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   padding-top: env(safe-area-inset-top);
-  overscroll-behavior-y: none;
+  overscroll-behavior-y: auto;
+  touch-action: pan-y;
 }
 
 @media (max-width: 639px) {
-  body { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)); }
+  body {
+    min-height: 100dvh;
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+
+  main {
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+  }
 
   input,
   select,

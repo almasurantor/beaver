@@ -10,6 +10,9 @@ CREATE TABLE public.profiles (
   total_losses INTEGER NOT NULL DEFAULT 0,
   weekly_wins INTEGER NOT NULL DEFAULT 0,
   weekly_losses INTEGER NOT NULL DEFAULT 0,
+  highest_elo INTEGER NOT NULL DEFAULT 1000,
+  current_streak INTEGER NOT NULL DEFAULT 0,
+  longest_streak INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -305,18 +308,44 @@ CREATE TRIGGER update_profiles_updated_at
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, display_name)
+  INSERT INTO public.profiles (
+    id,
+    display_name,
+    current_elo,
+    highest_elo,
+    total_wins,
+    total_losses,
+    weekly_wins,
+    weekly_losses,
+    current_streak,
+    longest_streak
+  )
   VALUES (
     NEW.id,
     COALESCE(
       NEW.raw_user_meta_data->>'display_name',
       NEW.raw_user_meta_data->>'full_name',
       SPLIT_PART(NEW.email, '@', 1)
-    )
-  );
+    ),
+    1000,
+    1000,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  )
+  ON CONFLICT (id) DO NOTHING;
+
+  IF to_regclass('public.player_integrity') IS NOT NULL THEN
+    EXECUTE 'INSERT INTO public.player_integrity (player_id) VALUES ($1) ON CONFLICT (player_id) DO NOTHING'
+    USING NEW.id;
+  END IF;
+
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Trigger to create profile on user signup
 CREATE TRIGGER on_auth_user_created
